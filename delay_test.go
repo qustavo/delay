@@ -28,9 +28,7 @@ func TestRegisterTriggersCallbackAfterSpecifiedTime(t *testing.T) {
 
 	elapsed := time.Since(start)
 	if elapsed <= 10*time.Millisecond {
-		t.Errorf("Callback should run after 10ms, %fms elasped\n",
-			float64(elapsed)/float64(time.Millisecond),
-		)
+		t.Errorf("Callback should run after 10ms, %s elasped\n", elapsed)
 	}
 }
 
