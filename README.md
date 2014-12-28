@@ -3,6 +3,18 @@ delay
 
 Delay goroutines at will
 
+Rationale
+---
+You're notifying events, say `follow` on users, so followed users will get
+notified when someone start following them, now imagine _someone_ follows
+_someother_ and, immediately after, it unfollows, you don't want to send the
+notification to the supposedly followed user.
+`Delay` tries to solve that problem.
+
+It allows to `delay` event triggering defining a waiting time.
+While an event is waiting to be triggered it can be updated or even cancelled
+(so it will never triggered).
+
 Example
 =====
 
