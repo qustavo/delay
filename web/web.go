@@ -4,40 +4,41 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/gchaincl/delay"
 )
 
 type Server struct {
-	mux *mux.Router
+	mux *http.ServeMux
 }
 
 func NewServer() *Server {
-	return &Server{mux.NewRouter()}
+	return &Server{http.NewServeMux()}
 }
 
 func (s *Server) Handle(route string, delayer *delay.Delayer) {
-	pattern := "/" + route + "/{key}"
+	pattern := "/" + route + "/"
 	s.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		key := mux.Vars(r)["key"]
-		payload, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
+		key := r.URL.Path[len(pattern):]
 
-		delayer.Register(key, string(payload))
-	}).Methods("POST")
+		switch r.Method {
+		case "POST":
+			defer r.Body.Close()
+			payload, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
 
-	s.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		key := mux.Vars(r)["key"]
-		if ok := delayer.Cancel(key); !ok {
-			http.NotFound(w, r)
-			return
+			delayer.Register(key, string(payload))
+		case "DELETE":
+			if ok := delayer.Cancel(key); !ok {
+				http.NotFound(w, r)
+				return
+			}
+		default:
+			http.Error(w, "Method Not Allowed", 405)
 		}
-	}).Methods("DELETE")
+	})
 }
 
 func (s Server) Listen(addr string) error {
