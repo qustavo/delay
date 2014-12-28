@@ -1,4 +1,4 @@
-delay
+delay [![Build Status](https://travis-ci.org/gchaincl/delay.svg)](https://travis-ci.org/gchaincl/delay)
 =====
 
 Delay goroutines at will
