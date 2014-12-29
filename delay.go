@@ -1,8 +1,6 @@
 package delay
 
-import (
-	"time"
-)
+import "time"
 
 type Delayer struct {
 	After    time.Duration
@@ -40,4 +38,15 @@ func (d *Delayer) Cancel(key string) bool {
 
 func (d *Delayer) Pending() int {
 	return len(d.timers)
+}
+
+func (d *Delayer) Flush() int {
+	flushed := 0
+	for _, timer := range d.timers {
+		if timer.Reset(0) == true {
+			flushed = flushed + 1
+		}
+	}
+
+	return flushed
 }

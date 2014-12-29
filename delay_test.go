@@ -60,3 +60,35 @@ func TestCallbacksAreUpdated(t *testing.T) {
 		t.Errorf("Message expected '%s', got '%s'", "3", got)
 	}
 }
+
+func TestFlushTriggerAllPendingCallbacks(t *testing.T) {
+	pending := 2
+	c := make(chan string, pending)
+
+	d := NewDelayer(func(key, payload string) {
+		c <- payload
+	}, 10*time.Second)
+
+	d.Register("a", "message")
+	d.Register("b", "message")
+	d.Flush()
+
+loop:
+	for {
+		select {
+		case <-time.After(10 * time.Millisecond):
+			t.Errorf("Messages was not flushed")
+			return
+		case <-c:
+			pending = pending - 1
+			if pending == 0 {
+				break loop
+			}
+		}
+	}
+
+	got := d.Pending()
+	if got != pending {
+		t.Errorf("got: %d, expected: %d\n", got, pending)
+	}
+}
