@@ -40,9 +40,23 @@ func (d *Delayer) Pending() int {
 	return len(d.timers)
 }
 
-func (d *Delayer) Flush() int {
+func (d *Delayer) Flush(keys ...string) int {
+	var timers map[string]*time.Timer
+
+	if len(keys) > 0 {
+		timers = make(map[string]*time.Timer)
+		for _, key := range keys {
+			if timer, ok := d.timers[key]; ok {
+				timers[key] = timer
+			}
+		}
+	} else {
+		// If no keys are specified, we flush all of them
+		timers = d.timers
+	}
+
 	flushed := 0
-	for _, timer := range d.timers {
+	for _, timer := range timers {
 		if timer.Reset(0) == true {
 			flushed = flushed + 1
 		}

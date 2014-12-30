@@ -92,3 +92,30 @@ loop:
 		t.Errorf("got: %d, expected: %d\n", got, pending)
 	}
 }
+
+func TestFlushTriggerASpecificCallback(t *testing.T) {
+	c := make(chan string, 2)
+
+	d := NewDelayer(func(key, payload string) {
+		c <- payload
+	}, 10*time.Second)
+
+	d.Register("a", "1")
+	d.Register("b", "2")
+
+	d.Flush("a")
+
+loop:
+	for {
+		select {
+		case <-time.After(10 * time.Millisecond):
+			break loop
+		case <-c:
+		}
+	}
+
+	got := d.Pending()
+	if got != 1 {
+		t.Errorf("Pending() got: %d, expected: 1\n", got)
+	}
+}
